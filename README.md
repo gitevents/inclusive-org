@@ -45,4 +45,4 @@ jobs:
 
 Licensed under [MIT](./LICENSE).
 
-Here is a list of all the licenses of our [production dependencies](./dist/licenses.txt):
+Here is a list of all the licenses of our [production dependencies](./dist/licenses.txt)
