@@ -6,9 +6,16 @@ import invite from './lib/gh-invite.js'
 
 async function run() {
   core.info('Starting GitEvents Inclusive Org ...')
-  const appId = core.getInput('gitevents-app-id')
-  const appPrivateKey = core.getInput('gitevents-app-private-key')
-  const appInstallationId = core.getInput('gitevents-app-installation-id')
+
+  const appId = core.getInput('gitevents-app-id', {
+    required: true
+  })
+  const appPrivateKey = core.getInput('gitevents-app-private-key', {
+    required: true
+  })
+  const appInstallationId = core.getInput('gitevents-app-installation-id', {
+    required: true
+  })
 
   core.info(
     `Running Inclusive Org with App ID ${appId} and Installation ID ${appInstallationId} ...`
