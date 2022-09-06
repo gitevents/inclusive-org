@@ -10,6 +10,10 @@ async function run() {
   const appPrivateKey = core.getInput('gitevents-app-private-key')
   const appInstallationId = core.getInput('gitevents-app-installation-id')
 
+  core.info(
+    `Running Inclusive Org with App ID ${appId} and Installation ID ${appInstallationId} ...`
+  )
+
   const octokit = new Octokit({
     authStrategy: createAppAuth,
     auth: {
