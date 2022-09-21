@@ -4,16 +4,24 @@
 
 ### Auto Invite
 
-The basic idea behind "git events" is that every person who interacts with the repo becomes a member of the organization/community. By becoming a member, people get GitHub notifications from your organization, which makes it easier for organizers to reach people and promotes interaction between your community.
+The basic idea behind "gitevents" is that everyone who interacts with the
+repository becomes a member of the organization/community.
+
+This GitHub Action can be used individually or as part of the
+[GitEvents Actions Suite](https://github.com/gitevents).
 
 ## Installation & Usage
 
-Follow [GitEvents/action](https://github.com/gitevents/action/blob/main/README.md) for the setup instructions.
+Follow
+[GitEvents/action](https://github.com/gitevents/action/blob/main/README.md) for
+the setup instructions. We use a GitHub App to authenticate with GitHub API.
 
 ```yml
 name: GitEvents Inclusive Organization
 
 on:
+  schedule:
+    - cron: '0 * * * *'
   push:
   pull_request:
   discussion:
@@ -34,7 +42,7 @@ jobs:
         with:
           node-version: 16
       - name: gitevents
-        uses: gitevents/inclusive-org@v1.0.0
+        uses: gitevents/inclusive-org@v1.1.0
         with:
           gitevents-app-id: ${{ secrets.GE_APP_ID }}
           gitevents-app-private-key: ${{ secrets.GE_APP_PRIVATE_KEY }}
@@ -45,4 +53,5 @@ jobs:
 
 Licensed under [MIT](./LICENSE).
 
-Here is a list of all the licenses of our [production dependencies](./dist/licenses.txt)
+Here is a list of all the licenses of our
+[production dependencies](./dist/licenses.txt)
