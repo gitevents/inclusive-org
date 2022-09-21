@@ -26060,27 +26060,113 @@ var __webpack_exports__ = {}
   var dist_node = __nccwpck_require__(5375)
   // EXTERNAL MODULE: ./node_modules/@octokit/auth-app/dist-node/index.js
   var auth_app_dist_node = __nccwpck_require__(7541) // CONCATENATED MODULE: ./src/lib/gh-invite.js
-  /* harmony default export */ async function gh_invite(github, context, core) {
+  /* harmony default export */ async function gh_invite(
+    github,
+    owner,
+    user,
+    core
+  ) {
     core.info('Checking membership and invitation status...')
-    const [owner] = process.env.GITHUB_REPOSITORY.split('/')
 
     try {
       await github.orgs.getMembershipForUser({
         org: owner,
-        username: context.payload.sender.login
+        username: user.login
       })
     } catch (err) {
       if (err.status === 404) {
         await github.orgs.createInvitation({
           org: owner,
-          invitee_id: context.payload.sender.id
+          invitee_id: user.id
         })
       }
     }
+  } // CONCATENATED MODULE: ./src/lib/gh-query.js
+
+  async function query(octokit, context, core) {
+    core.info('Querying for reactions')
+    const [owner, repo] = context.actor.split('/')
+
+    const query = `
+    query reactions($owner: String!, $repo: String!, $size: Int!) {
+      repository(name: $repo, owner: $owner) {
+        issues(first: $size, orderBy: { field: CREATED_AT, direction: DESC }) {
+          nodes {
+            reactions(first: $size) {
+              nodes {
+                user {
+                  id
+                  login
+                }
+              }
+              totalCount
+            }
+          }
+        }
+        discussions(
+          first: $size
+          orderBy: { field: CREATED_AT, direction: DESC }
+        ) {
+          nodes {
+            reactions(first: $size) {
+              totalCount
+              nodes {
+                user {
+                  id
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `
+
+    const { repository } = await octokit.graphql(query, {
+      owner: owner,
+      repo: repo,
+      size: 10
+    })
+
+    const users = repository.issues.nodes
+      .map((i) => {
+        return i.reactions.nodes
+          .map((r) => {
+            return { login: r.user.login, id: r.user.id }
+          })
+          .flat()
+      })
+      .concat(
+        repository.discussions.nodes.map((d) => {
+          return d.reactions.nodes
+            .map((r) => {
+              return { login: r.user.login, id: r.user.id }
+            })
+            .flat()
+        })
+      )
+      .flat()
+
+    const resArr = []
+    users.filter(function (item) {
+      var i = resArr.findIndex((x) => x.login == item.login && x.id == item.id)
+      if (i <= -1) {
+        resArr.push(item)
+      }
+      return null
+    })
+
+    return resArr
   } // CONCATENATED MODULE: ./src/index.js
 
   async function run() {
     core.info('Starting GitEvents Inclusive Org ...')
+
+    // for local integration testing
+    // const token = process.env.GITHUB_TOKEN
+    // const octokit = github.getOctokit(token)
+    // const context = github.context
 
     const appId = core.getInput('gitevents-app-id', {
       required: true
@@ -26096,6 +26182,7 @@ var __webpack_exports__ = {}
       `Running Inclusive Org with App ID ${appId} and Installation ID ${appInstallationId} ...`
     )
 
+    const context = github.context
     const octokit = new dist_node /* Octokit */.v({
       authStrategy: auth_app_dist_node /* createAppAuth */.iq,
       auth: {
@@ -26104,14 +26191,24 @@ var __webpack_exports__ = {}
         installationId: appInstallationId
       }
     })
-    const context = github.context
-
     const { data: appUser } = await octokit.rest.apps.getAuthenticated()
     const botUser = `${appUser.slug}[bot]`
-
     context.botUser = botUser
 
-    await gh_invite(octokit, context, core)
+    const owner = process.env.GITHUB_REPOSITORY_OWNER
+    if (context.eventName === 'workflow_dispatch') {
+      const users = await query(octokit, context, core)
+      for (const user of users) {
+        await gh_invite(octokit, owner, user, core)
+      }
+    } else if (context.eventName === 'schedule') {
+      const users = await query(octokit, context, core)
+      for (const user of users) {
+        await gh_invite(octokit, owner, user, core)
+      }
+    } else {
+      await gh_invite(octokit, owner, context.payload.sender, core)
+    }
   }
 
   run()

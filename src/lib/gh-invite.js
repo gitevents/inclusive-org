@@ -1,17 +1,16 @@
-export default async function (github, context, core) {
+export default async function (github, owner, user, core) {
   core.info('Checking membership and invitation status...')
-  const [owner] = process.env.GITHUB_REPOSITORY.split('/')
 
   try {
     await github.orgs.getMembershipForUser({
       org: owner,
-      username: context.payload.sender.login
+      username: user.login
     })
   } catch (err) {
     if (err.status === 404) {
       await github.orgs.createInvitation({
         org: owner,
-        invitee_id: context.payload.sender.id
+        invitee_id: user.id
       })
     }
   }
