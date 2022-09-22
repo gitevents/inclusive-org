@@ -26094,7 +26094,7 @@ var __webpack_exports__ = {}
             reactions(first: $size) {
               nodes {
                 user {
-                  id
+                  databaseId
                   login
                 }
               }
@@ -26111,7 +26111,7 @@ var __webpack_exports__ = {}
               totalCount
               nodes {
                 user {
-                  id
+                  databaseId
                   login
                 }
               }
@@ -26132,7 +26132,7 @@ var __webpack_exports__ = {}
       .map((i) => {
         return i.reactions.nodes
           .map((r) => {
-            return { login: r.user.login, id: r.user.id }
+            return { login: r.user.login, id: r.user.databaseId }
           })
           .flat()
       })
@@ -26140,7 +26140,7 @@ var __webpack_exports__ = {}
         repository.discussions.nodes.map((d) => {
           return d.reactions.nodes
             .map((r) => {
-              return { login: r.user.login, id: r.user.id }
+              return { login: r.user.login, id: r.user.databaseId }
             })
             .flat()
         })

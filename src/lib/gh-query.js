@@ -9,7 +9,7 @@ export default async function query(octokit, owner, repo, core) {
             reactions(first: $size) {
               nodes {
                 user {
-                  id
+                  databaseId
                   login
                 }
               }
@@ -26,7 +26,7 @@ export default async function query(octokit, owner, repo, core) {
               totalCount
               nodes {
                 user {
-                  id
+                  databaseId
                   login
                 }
               }
@@ -47,7 +47,7 @@ export default async function query(octokit, owner, repo, core) {
     .map((i) => {
       return i.reactions.nodes
         .map((r) => {
-          return { login: r.user.login, id: r.user.id }
+          return { login: r.user.login, id: r.user.databaseId }
         })
         .flat()
     })
@@ -55,7 +55,7 @@ export default async function query(octokit, owner, repo, core) {
       repository.discussions.nodes.map((d) => {
         return d.reactions.nodes
           .map((r) => {
-            return { login: r.user.login, id: r.user.id }
+            return { login: r.user.login, id: r.user.databaseId }
           })
           .flat()
       })
