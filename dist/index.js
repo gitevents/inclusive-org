@@ -26194,8 +26194,7 @@ var __webpack_exports__ = {}
     const botUser = `${appUser.slug}[bot]`
     context.botUser = botUser
 
-    const owner = process.env.GITHUB_REPOSITORY_OWNER
-    const repo = process.env.GITHUB_REPOSITORY_NAME
+    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
     if (context.eventName === 'workflow_dispatch') {
       const users = await query(octokit, owner, repo, core)
       for (const user of users) {
