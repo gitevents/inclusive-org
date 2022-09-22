@@ -1,6 +1,5 @@
-export default async function query(octokit, context, core) {
+export default async function query(octokit, owner, repo, core) {
   core.info('Querying for reactions')
-  const [owner, repo] = context.actor.split('/')
 
   const query = `
     query reactions($owner: String!, $repo: String!, $size: Int!) {

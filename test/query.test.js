@@ -24,7 +24,8 @@ tap.test('query() should return a list of users', async (t) => {
         return Promise.resolve(emptyResult)
       }
     },
-    { actor: 'hello/world' },
+    'hello',
+    'world',
     core
   )
   t.same(actual, [])

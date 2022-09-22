@@ -26083,9 +26083,8 @@ var __webpack_exports__ = {}
     }
   } // CONCATENATED MODULE: ./src/lib/gh-query.js
 
-  async function query(octokit, context, core) {
+  async function query(octokit, owner, repo, core) {
     core.info('Querying for reactions')
-    const [owner, repo] = context.actor.split('/')
 
     const query = `
     query reactions($owner: String!, $repo: String!, $size: Int!) {
@@ -26196,13 +26195,14 @@ var __webpack_exports__ = {}
     context.botUser = botUser
 
     const owner = process.env.GITHUB_REPOSITORY_OWNER
+    const repo = process.env.GITHUB_REPOSITORY_NAME
     if (context.eventName === 'workflow_dispatch') {
-      const users = await query(octokit, context, core)
+      const users = await query(octokit, owner, repo, core)
       for (const user of users) {
         await gh_invite(octokit, owner, user, core)
       }
     } else if (context.eventName === 'schedule') {
-      const users = await query(octokit, context, core)
+      const users = await query(octokit, owner, repo, core)
       for (const user of users) {
         await gh_invite(octokit, owner, user, core)
       }
