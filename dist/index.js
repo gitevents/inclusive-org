@@ -223,7 +223,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     const utils_1 = __nccwpck_require__(5278)
     const os = __importStar(__nccwpck_require__(2037))
     const path = __importStar(__nccwpck_require__(1017))
-    const uuid_1 = __nccwpck_require__(5840)
     const oidc_utils_1 = __nccwpck_require__(8041)
     /**
      * The code to exit an action
@@ -253,23 +252,12 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       process.env[name] = convertedVal
       const filePath = process.env['GITHUB_ENV'] || ''
       if (filePath) {
-        const delimiter = `ghadelimiter_${uuid_1.v4()}`
-        // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
-        if (name.includes(delimiter)) {
-          throw new Error(
-            `Unexpected input: name should not contain the delimiter "${delimiter}"`
-          )
-        }
-        if (convertedVal.includes(delimiter)) {
-          throw new Error(
-            `Unexpected input: value should not contain the delimiter "${delimiter}"`
-          )
-        }
-        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`
-        file_command_1.issueCommand('ENV', commandValue)
-      } else {
-        command_1.issueCommand('set-env', { name }, convertedVal)
+        return file_command_1.issueFileCommand(
+          'ENV',
+          file_command_1.prepareKeyValueMessage(name, val)
+        )
       }
+      command_1.issueCommand('set-env', { name }, convertedVal)
     }
     exports.exportVariable = exportVariable
     /**
@@ -287,7 +275,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     function addPath(inputPath) {
       const filePath = process.env['GITHUB_PATH'] || ''
       if (filePath) {
-        file_command_1.issueCommand('PATH', inputPath)
+        file_command_1.issueFileCommand('PATH', inputPath)
       } else {
         command_1.issueCommand('add-path', {}, inputPath)
       }
@@ -329,7 +317,10 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       const inputs = getInput(name, options)
         .split('\n')
         .filter((x) => x !== '')
-      return inputs
+      if (options && options.trimWhitespace === false) {
+        return inputs
+      }
+      return inputs.map((input) => input.trim())
     }
     exports.getMultilineInput = getMultilineInput
     /**
@@ -362,8 +353,19 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function setOutput(name, value) {
+      const filePath = process.env['GITHUB_OUTPUT'] || ''
+      if (filePath) {
+        return file_command_1.issueFileCommand(
+          'OUTPUT',
+          file_command_1.prepareKeyValueMessage(name, value)
+        )
+      }
       process.stdout.write(os.EOL)
-      command_1.issueCommand('set-output', { name }, value)
+      command_1.issueCommand(
+        'set-output',
+        { name },
+        utils_1.toCommandValue(value)
+      )
     }
     exports.setOutput = setOutput
     /**
@@ -503,7 +505,18 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function saveState(name, value) {
-      command_1.issueCommand('save-state', { name }, value)
+      const filePath = process.env['GITHUB_STATE'] || ''
+      if (filePath) {
+        return file_command_1.issueFileCommand(
+          'STATE',
+          file_command_1.prepareKeyValueMessage(name, value)
+        )
+      }
+      command_1.issueCommand(
+        'save-state',
+        { name },
+        utils_1.toCommandValue(value)
+      )
     }
     exports.saveState = saveState
     /**
@@ -613,13 +626,14 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         return result
       }
     Object.defineProperty(exports, '__esModule', { value: true })
-    exports.issueCommand = void 0
+    exports.prepareKeyValueMessage = exports.issueFileCommand = void 0
     // We use any as a valid input type
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const fs = __importStar(__nccwpck_require__(7147))
     const os = __importStar(__nccwpck_require__(2037))
+    const uuid_1 = __nccwpck_require__(5840)
     const utils_1 = __nccwpck_require__(5278)
-    function issueCommand(command, message) {
+    function issueFileCommand(command, message) {
       const filePath = process.env[`GITHUB_${command}`]
       if (!filePath) {
         throw new Error(
@@ -637,7 +651,26 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         }
       )
     }
-    exports.issueCommand = issueCommand
+    exports.issueFileCommand = issueFileCommand
+    function prepareKeyValueMessage(key, value) {
+      const delimiter = `ghadelimiter_${uuid_1.v4()}`
+      const convertedValue = utils_1.toCommandValue(value)
+      // These should realistically never happen, but just in case someone finds a
+      // way to exploit uuid generation let's not allow keys or values that contain
+      // the delimiter.
+      if (key.includes(delimiter)) {
+        throw new Error(
+          `Unexpected input: name should not contain the delimiter "${delimiter}"`
+        )
+      }
+      if (convertedValue.includes(delimiter)) {
+        throw new Error(
+          `Unexpected input: value should not contain the delimiter "${delimiter}"`
+        )
+      }
+      return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`
+    }
+    exports.prepareKeyValueMessage = prepareKeyValueMessage
     //# sourceMappingURL=file-command.js.map
 
     /***/
@@ -1352,8 +1385,9 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
      * @param     token    the repo PAT or GITHUB_TOKEN
      * @param     options  other options to set
      */
-    function getOctokit(token, options) {
-      return new utils_1.GitHub(utils_1.getOctokitOptions(token, options))
+    function getOctokit(token, options, ...additionalPlugins) {
+      const GitHubWithPlugins = utils_1.GitHub.plugin(...additionalPlugins)
+      return new GitHubWithPlugins(utils_1.getOctokitOptions(token, options))
     }
     exports.getOctokit = getOctokit
     //# sourceMappingURL=github.js.map
@@ -2951,11 +2985,17 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       }
     }
 
-    const VERSION = '4.0.5'
+    const VERSION = '4.0.6'
 
     function createAppAuth(options) {
       if (!options.appId) {
         throw new Error('[@octokit/auth-app] appId option is required')
+      }
+
+      if (!Number.isFinite(+options.appId)) {
+        throw new Error(
+          '[@octokit/auth-app] appId option must be a number or numeric string'
+        )
       }
 
       if (!options.privateKey) {
@@ -26069,13 +26109,50 @@ var __webpack_exports__ = {}
     core.info('Checking membership and invitation status...')
 
     try {
-      await github.orgs.getMembershipForUser({
+      // check failed invites
+      const failedInvites = await github.rest.orgs.listFailedInvitations({
+        org: owner,
+        per_page: 100
+      })
+      const failedInvite = failedInvites.data.find(
+        (i) => i.login === user.login
+      )
+      if (failedInvite) {
+        core.debug('Invitation failed')
+        return
+      }
+
+      // check pending invites
+      const pendingInvites = await github.rest.orgs.listPendingInvitations({
+        org: owner,
+        per_page: 100
+      })
+      const pendingInvite = pendingInvites.data.find(
+        (i) => i.login === user.login
+      )
+      if (pendingInvite) {
+        core.debug('Invitation pending')
+        return
+      }
+
+      // check membership status
+      const isMember = await github.rest.orgs.getMembershipForUser({
         org: owner,
         username: user.login
       })
+      if (isMember) {
+        return
+      }
+
+      // invite is not pending or failed, user is not a member, let's invite
+      core.info('Inviting user')
+      await github.rest.orgs.createInvitation({
+        org: owner,
+        invitee_id: user.id
+      })
     } catch (err) {
       if (err.status === 404) {
-        await github.orgs.createInvitation({
+        await github.rest.orgs.createInvitation({
           org: owner,
           invitee_id: user.id
         })
@@ -26166,6 +26243,8 @@ var __webpack_exports__ = {}
     // const token = process.env.GITHUB_TOKEN
     // const octokit = github.getOctokit(token)
     // const context = github.context
+    // const owner = 'cyprus-developer-community'
+    // const repo = 'events'
 
     const appId = core.getInput('gitevents-app-id', {
       required: true
@@ -26195,6 +26274,7 @@ var __webpack_exports__ = {}
     context.botUser = botUser
 
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
+
     if (context.eventName === 'workflow_dispatch') {
       const users = await query(octokit, owner, repo, core)
       for (const user of users) {

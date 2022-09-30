@@ -12,6 +12,8 @@ async function run() {
   // const token = process.env.GITHUB_TOKEN
   // const octokit = github.getOctokit(token)
   // const context = github.context
+  // const owner = 'cyprus-developer-community'
+  // const repo = 'events'
 
   const appId = core.getInput('gitevents-app-id', {
     required: true
@@ -41,6 +43,7 @@ async function run() {
   context.botUser = botUser
 
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
+
   if (context.eventName === 'workflow_dispatch') {
     const users = await query(octokit, owner, repo, core)
     for (const user of users) {
