@@ -1511,7 +1511,11 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         return result
       }
     Object.defineProperty(exports, '__esModule', { value: true })
-    exports.getOctokitOptions = exports.GitHub = exports.context = void 0
+    exports.getOctokitOptions =
+      exports.GitHub =
+      exports.defaults =
+      exports.context =
+        void 0
     const Context = __importStar(__nccwpck_require__(4087))
     const Utils = __importStar(__nccwpck_require__(7914))
     // octokit + plugins
@@ -1520,7 +1524,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     const plugin_paginate_rest_1 = __nccwpck_require__(4193)
     exports.context = new Context.Context()
     const baseUrl = Utils.getApiBaseUrl()
-    const defaults = {
+    exports.defaults = {
       baseUrl,
       request: {
         agent: Utils.getProxyAgent(baseUrl)
@@ -1529,7 +1533,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     exports.GitHub = core_1.Octokit.plugin(
       plugin_rest_endpoint_methods_1.restEndpointMethods,
       plugin_paginate_rest_1.paginateRest
-    ).defaults(defaults)
+    ).defaults(exports.defaults)
     /**
      * Convience function to correctly format Octokit Options to pass into the constructor.
      *
@@ -2985,7 +2989,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       }
     }
 
-    const VERSION = '4.0.6'
+    const VERSION = '4.0.7'
 
     function createAppAuth(options) {
       if (!options.appId) {
@@ -10629,7 +10633,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     var pluginPaginateRest = __nccwpck_require__(606)
     var pluginRestEndpointMethods = __nccwpck_require__(4923)
 
-    const VERSION = '19.0.4'
+    const VERSION = '19.0.5'
 
     const Octokit = core.Octokit.plugin(
       pluginRequestLog.requestLog,
@@ -10724,7 +10728,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     var graphql = __nccwpck_require__(7461)
     var authToken = __nccwpck_require__(7633)
 
-    const VERSION = '4.0.5'
+    const VERSION = '4.1.0'
 
     class Octokit {
       constructor(options = {}) {
@@ -11270,8 +11274,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         } else {
           if (Object.keys(remainingParameters).length) {
             body = remainingParameters
-          } else {
-            headers['content-length'] = 0
           }
         }
       } // default content-type for JSON if body is set
@@ -11319,7 +11321,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       })
     }
 
-    const VERSION = '7.0.1'
+    const VERSION = '7.0.3'
 
     const userAgent = `octokit-endpoint.js/${VERSION} ${universalUserAgent.getUserAgent()}` // DEFAULTS has all properties set that EndpointOptions has, except url.
     // So we use RequestParameters and add method as additional required property.
@@ -11351,7 +11353,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     var request = __nccwpck_require__(6206)
     var universalUserAgent = __nccwpck_require__(5030)
 
-    const VERSION = '5.0.1'
+    const VERSION = '5.0.4'
 
     function _buildMessageForResponseErrors(data) {
       return (
@@ -11359,20 +11361,18 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         data.errors.map((e) => ` - ${e.message}`).join('\n')
       )
     }
-
     class GraphqlResponseError extends Error {
       constructor(request, headers, response) {
         super(_buildMessageForResponseErrors(response))
         this.request = request
         this.headers = headers
         this.response = response
-        this.name = 'GraphqlResponseError' // Expose the errors and response data in their shorthand properties.
-
+        this.name = 'GraphqlResponseError'
+        // Expose the errors and response data in their shorthand properties.
         this.errors = response.errors
-        this.data = response.data // Maintains proper stack trace (only available on V8)
-
+        this.data = response.data
+        // Maintains proper stack trace (only available on V8)
         /* istanbul ignore next */
-
         if (Error.captureStackTrace) {
           Error.captureStackTrace(this, this.constructor)
         }
@@ -11399,7 +11399,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
             )
           )
         }
-
         for (const key in options) {
           if (!FORBIDDEN_VARIABLE_OPTIONS.includes(key)) continue
           return Promise.reject(
@@ -11409,7 +11408,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
           )
         }
       }
-
       const parsedOptions =
         typeof query === 'string'
           ? Object.assign(
@@ -11425,52 +11423,43 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
             result[key] = parsedOptions[key]
             return result
           }
-
           if (!result.variables) {
             result.variables = {}
           }
-
           result.variables[key] = parsedOptions[key]
           return result
         },
         {}
-      ) // workaround for GitHub Enterprise baseUrl set with /api/v3 suffix
+      )
+      // workaround for GitHub Enterprise baseUrl set with /api/v3 suffix
       // https://github.com/octokit/auth-app.js/issues/111#issuecomment-657610451
-
       const baseUrl = parsedOptions.baseUrl || request.endpoint.DEFAULTS.baseUrl
-
       if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
         requestOptions.url = baseUrl.replace(
           GHES_V3_SUFFIX_REGEX,
           '/api/graphql'
         )
       }
-
       return request(requestOptions).then((response) => {
         if (response.data.errors) {
           const headers = {}
-
           for (const key of Object.keys(response.headers)) {
             headers[key] = response.headers[key]
           }
-
           throw new GraphqlResponseError(requestOptions, headers, response.data)
         }
-
         return response.data.data
       })
     }
 
-    function withDefaults(request$1, newDefaults) {
-      const newRequest = request$1.defaults(newDefaults)
-
+    function withDefaults(request, newDefaults) {
+      const newRequest = request.defaults(newDefaults)
       const newApi = (query, options) => {
         return graphql(newRequest, query, options)
       }
-
       return Object.assign(newApi, {
         defaults: withDefaults.bind(null, newRequest),
-        endpoint: request.request.endpoint
+        endpoint: newRequest.endpoint
       })
     }
 
@@ -11499,7 +11488,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
   /***/ 606: /***/ (__unused_webpack_module, exports) => {
     Object.defineProperty(exports, '__esModule', { value: true })
 
-    const VERSION = '4.2.0'
+    const VERSION = '5.0.1'
 
     /**
      * Some “list” response that can be paginated have a different response structure
@@ -11520,14 +11509,16 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     function normalizePaginatedListResponse(response) {
       // endpoints can respond with 204 if repository is empty
       if (!response.data) {
-        return { ...response, data: [] }
+        return {
+          ...response,
+          data: []
+        }
       }
-
       const responseNeedsNormalization =
         'total_count' in response.data && !('url' in response.data)
-      if (!responseNeedsNormalization) return response // keep the additional properties intact as there is currently no other way
+      if (!responseNeedsNormalization) return response
+      // keep the additional properties intact as there is currently no other way
       // to retrieve the same information.
-
       const incompleteResults = response.data.incomplete_results
       const repositorySelection = response.data.repository_selection
       const totalCount = response.data.total_count
@@ -11537,15 +11528,12 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       const namespaceKey = Object.keys(response.data)[0]
       const data = response.data[namespaceKey]
       response.data = data
-
       if (typeof incompleteResults !== 'undefined') {
         response.data.incomplete_results = incompleteResults
       }
-
       if (typeof repositorySelection !== 'undefined') {
         response.data.repository_selection = repositorySelection
       }
-
       response.data.total_count = totalCount
       return response
     }
@@ -11567,7 +11555,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
               return {
                 done: true
               }
-
             try {
               const response = await requestMethod({
                 method,
@@ -11575,10 +11562,10 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
                 headers
               })
               const normalizedResponse =
-                normalizePaginatedListResponse(response) // `response.headers.link` format:
+                normalizePaginatedListResponse(response)
+              // `response.headers.link` format:
               // '<https://api.github.com/users/aseemk/followers?page=2>; rel="next", <https://api.github.com/users/aseemk/followers?page=2>; rel="last"'
               // sets `url` to undefined if "next" URL is not present or `link` header is not set
-
               url = ((normalizedResponse.headers.link || '').match(
                 /<([^>]+)>;\s*rel="next"/
               ) || [])[1]
@@ -11606,7 +11593,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         mapFn = parameters
         parameters = undefined
       }
-
       return gather(
         octokit,
         [],
@@ -11614,27 +11600,21 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         mapFn
       )
     }
-
     function gather(octokit, results, iterator, mapFn) {
       return iterator.next().then((result) => {
         if (result.done) {
           return results
         }
-
         let earlyExit = false
-
         function done() {
           earlyExit = true
         }
-
         results = results.concat(
           mapFn ? mapFn(result.value, done) : result.value.data
         )
-
         if (earlyExit) {
           return results
         }
-
         return gather(octokit, results, iterator, mapFn)
       })
     }
@@ -11651,7 +11631,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       'GET /enterprises/{enterprise}/actions/runner-groups/{runner_group_id}/organizations',
       'GET /enterprises/{enterprise}/actions/runner-groups/{runner_group_id}/runners',
       'GET /enterprises/{enterprise}/actions/runners',
-      'GET /enterprises/{enterprise}/audit-log',
       'GET /enterprises/{enterprise}/code-scanning/alerts',
       'GET /enterprises/{enterprise}/secret-scanning/alerts',
       'GET /enterprises/{enterprise}/settings/billing/advanced-security',
@@ -11672,6 +11651,8 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       'GET /networks/{owner}/{repo}/events',
       'GET /notifications',
       'GET /organizations',
+      'GET /organizations/{org}/codespaces/secrets',
+      'GET /organizations/{org}/codespaces/secrets/{secret_name}/repositories',
       'GET /orgs/{org}/actions/cache/usage-by-repository',
       'GET /orgs/{org}/actions/permissions/repositories',
       'GET /orgs/{org}/actions/runner-groups',
@@ -11680,15 +11661,12 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       'GET /orgs/{org}/actions/runners',
       'GET /orgs/{org}/actions/secrets',
       'GET /orgs/{org}/actions/secrets/{secret_name}/repositories',
-      'GET /orgs/{org}/audit-log',
       'GET /orgs/{org}/blocks',
       'GET /orgs/{org}/code-scanning/alerts',
       'GET /orgs/{org}/codespaces',
-      'GET /orgs/{org}/credential-authorizations',
       'GET /orgs/{org}/dependabot/secrets',
       'GET /orgs/{org}/dependabot/secrets/{secret_name}/repositories',
       'GET /orgs/{org}/events',
-      'GET /orgs/{org}/external-groups',
       'GET /orgs/{org}/failed_invitations',
       'GET /orgs/{org}/hooks',
       'GET /orgs/{org}/hooks/{hook_id}/deliveries',
@@ -11707,7 +11685,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       'GET /orgs/{org}/repos',
       'GET /orgs/{org}/secret-scanning/alerts',
       'GET /orgs/{org}/settings/billing/advanced-security',
-      'GET /orgs/{org}/team-sync/groups',
       'GET /orgs/{org}/teams',
       'GET /orgs/{org}/teams/{team_slug}/discussions',
       'GET /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments',
@@ -11752,6 +11729,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       'GET /repos/{owner}/{repo}/commits/{ref}/status',
       'GET /repos/{owner}/{repo}/commits/{ref}/statuses',
       'GET /repos/{owner}/{repo}/contributors',
+      'GET /repos/{owner}/{repo}/dependabot/alerts',
       'GET /repos/{owner}/{repo}/dependabot/secrets',
       'GET /repos/{owner}/{repo}/deployments',
       'GET /repos/{owner}/{repo}/deployments/{deployment_id}/statuses',
@@ -11872,7 +11850,6 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
      * @param octokit Octokit instance
      * @param options Options passed to Octokit constructor
      */
-
     function paginateRest(octokit) {
       return {
         paginate: Object.assign(paginate.bind(null, octokit), {
@@ -12373,6 +12350,9 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         getAnalysis: [
           'GET /repos/{owner}/{repo}/code-scanning/analyses/{analysis_id}'
         ],
+        getCodeqlDatabase: [
+          'GET /repos/{owner}/{repo}/code-scanning/codeql/databases/{language}'
+        ],
         getSarif: ['GET /repos/{owner}/{repo}/code-scanning/sarifs/{sarif_id}'],
         listAlertInstances: [
           'GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}/instances'
@@ -12388,6 +12368,9 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
           {
             renamed: ['codeScanning', 'listAlertInstances']
           }
+        ],
+        listCodeqlDatabases: [
+          'GET /repos/{owner}/{repo}/code-scanning/codeql/databases'
         ],
         listRecentAnalyses: [
           'GET /repos/{owner}/{repo}/code-scanning/analyses'
@@ -12405,10 +12388,16 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         addRepositoryForSecretForAuthenticatedUser: [
           'PUT /user/codespaces/secrets/{secret_name}/repositories/{repository_id}'
         ],
+        addSelectedRepoToOrgSecret: [
+          'PUT /organizations/{org}/codespaces/secrets/{secret_name}/repositories/{repository_id}'
+        ],
         codespaceMachinesForAuthenticatedUser: [
           'GET /user/codespaces/{codespace_name}/machines'
         ],
         createForAuthenticatedUser: ['POST /user/codespaces'],
+        createOrUpdateOrgSecret: [
+          'PUT /organizations/{org}/codespaces/secrets/{secret_name}'
+        ],
         createOrUpdateRepoSecret: [
           'PUT /repos/{owner}/{repo}/codespaces/secrets/{secret_name}'
         ],
@@ -12427,6 +12416,9 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         deleteFromOrganization: [
           'DELETE /orgs/{org}/members/{username}/codespaces/{codespace_name}'
         ],
+        deleteOrgSecret: [
+          'DELETE /organizations/{org}/codespaces/secrets/{secret_name}'
+        ],
         deleteRepoSecret: [
           'DELETE /repos/{owner}/{repo}/codespaces/secrets/{secret_name}'
         ],
@@ -12440,6 +12432,12 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
           'GET /user/codespaces/{codespace_name}/exports/{export_id}'
         ],
         getForAuthenticatedUser: ['GET /user/codespaces/{codespace_name}'],
+        getOrgPublicKey: [
+          'GET /organizations/{org}/codespaces/secrets/public-key'
+        ],
+        getOrgSecret: [
+          'GET /organizations/{org}/codespaces/secrets/{secret_name}'
+        ],
         getPublicKeyForAuthenticatedUser: [
           'GET /user/codespaces/secrets/public-key'
         ],
@@ -12468,22 +12466,32 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         listInRepositoryForAuthenticatedUser: [
           'GET /repos/{owner}/{repo}/codespaces'
         ],
+        listOrgSecrets: ['GET /organizations/{org}/codespaces/secrets'],
         listRepoSecrets: ['GET /repos/{owner}/{repo}/codespaces/secrets'],
         listRepositoriesForSecretForAuthenticatedUser: [
           'GET /user/codespaces/secrets/{secret_name}/repositories'
         ],
         listSecretsForAuthenticatedUser: ['GET /user/codespaces/secrets'],
+        listSelectedReposForOrgSecret: [
+          'GET /organizations/{org}/codespaces/secrets/{secret_name}/repositories'
+        ],
         preFlightWithRepoForAuthenticatedUser: [
           'GET /repos/{owner}/{repo}/codespaces/new'
         ],
         removeRepositoryForSecretForAuthenticatedUser: [
           'DELETE /user/codespaces/secrets/{secret_name}/repositories/{repository_id}'
         ],
+        removeSelectedRepoFromOrgSecret: [
+          'DELETE /organizations/{org}/codespaces/secrets/{secret_name}/repositories/{repository_id}'
+        ],
         repoMachinesForAuthenticatedUser: [
           'GET /repos/{owner}/{repo}/codespaces/machines'
         ],
         setRepositoriesForSecretForAuthenticatedUser: [
           'PUT /user/codespaces/secrets/{secret_name}/repositories'
+        ],
+        setSelectedReposForOrgSecret: [
+          'PUT /organizations/{org}/codespaces/secrets/{secret_name}/repositories'
         ],
         startForAuthenticatedUser: [
           'POST /user/codespaces/{codespace_name}/start'
@@ -12512,6 +12520,9 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         deleteRepoSecret: [
           'DELETE /repos/{owner}/{repo}/dependabot/secrets/{secret_name}'
         ],
+        getAlert: [
+          'GET /repos/{owner}/{repo}/dependabot/alerts/{alert_number}'
+        ],
         getOrgPublicKey: ['GET /orgs/{org}/dependabot/secrets/public-key'],
         getOrgSecret: ['GET /orgs/{org}/dependabot/secrets/{secret_name}'],
         getRepoPublicKey: [
@@ -12520,6 +12531,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         getRepoSecret: [
           'GET /repos/{owner}/{repo}/dependabot/secrets/{secret_name}'
         ],
+        listAlertsForRepo: ['GET /repos/{owner}/{repo}/dependabot/alerts'],
         listOrgSecrets: ['GET /orgs/{org}/dependabot/secrets'],
         listRepoSecrets: ['GET /repos/{owner}/{repo}/dependabot/secrets'],
         listSelectedReposForOrgSecret: [
@@ -12530,6 +12542,9 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         ],
         setSelectedReposForOrgSecret: [
           'PUT /orgs/{org}/dependabot/secrets/{secret_name}/repositories'
+        ],
+        updateAlert: [
+          'PATCH /repos/{owner}/{repo}/dependabot/alerts/{alert_number}'
         ]
       },
       dependencyGraph: {
@@ -12824,8 +12839,10 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         convertMemberToOutsideCollaborator: [
           'PUT /orgs/{org}/outside_collaborators/{username}'
         ],
+        createCustomRole: ['POST /orgs/{org}/custom_roles'],
         createInvitation: ['POST /orgs/{org}/invitations'],
         createWebhook: ['POST /orgs/{org}/hooks'],
+        deleteCustomRole: ['DELETE /orgs/{org}/custom_roles/{role_id}'],
         deleteWebhook: ['DELETE /orgs/{org}/hooks/{hook_id}'],
         enableOrDisableSecurityProductOnAllOrgRepos: [
           'POST /orgs/{org}/{security_product}/{enablement}'
@@ -12843,6 +12860,9 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         listBlockedUsers: ['GET /orgs/{org}/blocks'],
         listCustomRoles: ['GET /organizations/{organization_id}/custom_roles'],
         listFailedInvitations: ['GET /orgs/{org}/failed_invitations'],
+        listFineGrainedPermissions: [
+          'GET /orgs/{org}/fine_grained_permissions'
+        ],
         listForAuthenticatedUser: ['GET /user/orgs'],
         listForUser: ['GET /users/{username}/orgs'],
         listInvitationTeams: [
@@ -12877,6 +12897,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         ],
         unblockUser: ['DELETE /orgs/{org}/blocks/{username}'],
         update: ['PATCH /orgs/{org}'],
+        updateCustomRole: ['PATCH /orgs/{org}/custom_roles/{role_id}'],
         updateMembershipForAuthenticatedUser: [
           'PATCH /user/memberships/orgs/{org}'
         ],
@@ -13815,11 +13836,10 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       }
     }
 
-    const VERSION = '6.4.1'
+    const VERSION = '6.7.0'
 
     function endpointsToMethods(octokit, endpointsMap) {
       const newMethods = {}
-
       for (const [scope, endpoints] of Object.entries(endpointsMap)) {
         for (const [methodName, endpoint] of Object.entries(endpoints)) {
           const [route, defaults, decorations] = endpoint
@@ -13831,13 +13851,10 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
             },
             defaults
           )
-
           if (!newMethods[scope]) {
             newMethods[scope] = {}
           }
-
           const scopeMethods = newMethods[scope]
-
           if (decorations) {
             scopeMethods[methodName] = decorate(
               octokit,
@@ -13848,22 +13865,18 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
             )
             continue
           }
-
           scopeMethods[methodName] = octokit.request.defaults(endpointDefaults)
         }
       }
-
       return newMethods
     }
-
     function decorate(octokit, scope, methodName, defaults, decorations) {
       const requestWithDefaults = octokit.request.defaults(defaults)
       /* istanbul ignore next */
-
       function withDecorations(...args) {
         // @ts-ignore https://github.com/microsoft/TypeScript/issues/25488
-        let options = requestWithDefaults.endpoint.merge(...args) // There are currently no other decorations than `.mapToData`
-
+        let options = requestWithDefaults.endpoint.merge(...args)
+        // There are currently no other decorations than `.mapToData`
         if (decorations.mapToData) {
           options = Object.assign({}, options, {
             data: options[decorations.mapToData],
@@ -13871,22 +13884,18 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
           })
           return requestWithDefaults(options)
         }
-
         if (decorations.renamed) {
           const [newScope, newMethodName] = decorations.renamed
           octokit.log.warn(
             `octokit.${scope}.${methodName}() has been renamed to octokit.${newScope}.${newMethodName}()`
           )
         }
-
         if (decorations.deprecated) {
           octokit.log.warn(decorations.deprecated)
         }
-
         if (decorations.renamedParameters) {
           // @ts-ignore https://github.com/microsoft/TypeScript/issues/25488
           const options = requestWithDefaults.endpoint.merge(...args)
-
           for (const [name, alias] of Object.entries(
             decorations.renamedParameters
           )) {
@@ -13894,21 +13903,17 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
               octokit.log.warn(
                 `"${name}" parameter is deprecated for "octokit.${scope}.${methodName}()". Use "${alias}" instead`
               )
-
               if (!(alias in options)) {
                 options[alias] = options[name]
               }
-
               delete options[name]
             }
           }
-
           return requestWithDefaults(options)
-        } // @ts-ignore https://github.com/microsoft/TypeScript/issues/25488
-
+        }
+        // @ts-ignore https://github.com/microsoft/TypeScript/issues/25488
         return requestWithDefaults(...args)
       }
-
       return Object.assign(withDecorations, requestWithDefaults)
     }
 
@@ -13921,7 +13926,10 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     restEndpointMethods.VERSION = VERSION
     function legacyRestEndpointMethods(octokit) {
       const api = endpointsToMethods(octokit, Endpoints)
-      return { ...api, rest: api }
+      return {
+        ...api,
+        rest: api
+      }
     }
     legacyRestEndpointMethods.VERSION = VERSION
 
@@ -14035,7 +14043,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
     var nodeFetch = _interopDefault(__nccwpck_require__(467))
     var requestError = __nccwpck_require__(6239)
 
-    const VERSION = '6.2.1'
+    const VERSION = '6.2.2'
 
     function getBufferResponse(response) {
       return response.arrayBuffer()
