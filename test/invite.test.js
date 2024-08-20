@@ -1,13 +1,12 @@
-/* eslint-disable node/no-unpublished-import */
-
-import t from 'tap'
+import { test } from 'node:test'
+import assert from 'node:assert'
 import invite from '../src/lib/gh-invite.js'
 
 const core = {
   info: () => {}
 }
 
-t.test('invite() should invite a user to the org', async (t) => {
+test('invite() should invite a user to the org', async () => {
   const octokit = {
     orgs: {
       getMembershipForUser: () => {
@@ -20,7 +19,7 @@ t.test('invite() should invite a user to the org', async (t) => {
   }
 
   await invite(octokit, 'hello', { login: 'hello', id: 'a123' }, core)
-  t.pass()
+  assert.ok(true)
 })
 
 // test('invite() should skip the invite', async () => {

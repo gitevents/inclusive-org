@@ -1,12 +1,12 @@
-/* eslint-disable node/no-unpublished-import */
-import tap from 'tap'
+import { test } from 'node:test'
+import assert from 'node:assert'
 import query from '../src/lib/gh-query.js'
 
 const core = {
   info: () => {}
 }
 
-tap.test('query() should return a list of users', async (t) => {
+test('query() should return a list of users', async () => {
   const emptyResult = {
     repository: {
       issues: {
@@ -28,5 +28,5 @@ tap.test('query() should return a list of users', async (t) => {
     'world',
     core
   )
-  t.same(actual, [])
+  assert.deepEqual(actual, [])
 })
